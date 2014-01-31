@@ -6,6 +6,17 @@ Spins up external processes your tests need.
 example:
 ========
 
+```json
+{
+  "redis": {
+    "cmd": ["/usr/sbin/redis-server"],
+    "wait_for": {
+      "port": 6379
+    }
+  }
+}
+```
+
 ```javascript
 var ready = require('depends-on')('redis');
 var test = require('tape');
@@ -16,18 +27,9 @@ test('init', ready);
 
 ```
 
-```json
-{
-  "redis": {
-    "cmd": ["/usr/sbin/redis-server"],
-    "wait_for": {
-      "port": 6379
-    }
-  }
-}
-```
+`ready()` is a function that takes a callback. It will call that callback when your dependencies are ready. They'll be stopped when your node process exits. 
 
-Your tests won't run until Redis is ready, then it will stop when your tests finish. Dependencies are also supported. Say you want to clear all values from Redis after it starts, but before your tests run.
+Dependencies can have dependencies. Say you want to clear all values from Redis after it starts, but before your tests run:
 
 ```json
 {
@@ -37,7 +39,7 @@ Your tests won't run until Redis is ready, then it will stop when your tests fin
       "port": 6379
     }
   },
-  "empty redis": {
+  "fresh redis": {
     "cmd": ["./bin/flushall.sh"],
     "depends": ["redis"]
   }
@@ -45,7 +47,7 @@ Your tests won't run until Redis is ready, then it will stop when your tests fin
 ```
 
 ```javascript
-var ready = require('depends-on')('empty redis');
+var ready = require('depends-on')('fresh redis');
 …
 ```
 
