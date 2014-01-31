@@ -1,0 +1,54 @@
+{
+  "false": {
+    "cmd": ["false"]
+  },
+  "true": {
+    "cmd": ["true"]
+  },
+  "bind a port": {
+    "cmd": ["tests/fixtures/bind-port.js", "9897"],
+    "wait_for": {
+      "host": "127.0.0.1",
+      "port": 9897
+    },
+    "timeout": 60
+  },
+  "write to the port": {
+    "cmd": ["tests/fixtures/write-to-port.js", "9897", "hello socket"],
+    "depends": ["bind a port"]
+  },
+  "noise to stdout": {
+    "cmd": ["echo", "hello there stdout"]
+  },
+  "noise to stderr": {
+    "cmd": ["tests/fixtures/noise-to-stderr.sh"],
+    "depends": ["noise to stdout"]
+  },
+  "mkfifo": {
+    "cmd": ["mkfifo", "tests/fish"],
+    "cwd": ["__dirname"],
+    "stdout": "tests/logs/mkfifo.stdout",
+    "timeout": 30
+  },
+  "write": {
+    "cmd": ["tests/fixtures/write.sh"],
+    "cwd": ["__dirname"],
+    "log_file": "tests/logs/write.stdout",
+    "depends": ["mkfifo"],
+    "timeout": 30
+  },
+  "read": {
+    "cmd": ["cat", "tests/fish"],
+    "cwd": ["__dirname"],
+    "log_file": "tests/logs/read.stdout",
+    "depends": ["write"],
+    "timeout": 30
+  },
+  "clean": {
+    "cmd": ["rm", "tests/fish"],
+    "cwd": ["__dirname"],
+    "log_file": "tests/logs/clean.stdout",
+    "depends": ["read"],
+    "timeout": 30
+  }
+}
