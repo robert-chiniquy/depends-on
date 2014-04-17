@@ -39,3 +39,9 @@ test('wait for socket', function(t) {
   });
 });
 
+test('custom filename', function(t) {
+  require('../', 'custom-dependencies')()(function(err) {
+    t.end();
+  });
+});
+

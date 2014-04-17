@@ -32,14 +32,14 @@ module.exports = function(targets) {
   error = null;
 
   return function ready(callback) {
-    async.auto(dependencies(targets), callback);
+    async.auto(dependencies(targets || [], source), callback);
   }
 };
 
 
 function dependencies(targets) {
   var
-    dependencies = require(path.resolve(process.cwd(), 'tests/dependencies.json')),
+    dependencies = require(source || path.resolve(process.cwd(), 'tests/dependencies')),
     r = {};
 
   _.each(dependencies, function(dep, name) {
@@ -51,7 +51,7 @@ function dependencies(targets) {
     }
   });
 
-  return autotarget(r, targets);
+  return targets.length ? autotarget(r, targets) : r;
 }
 
 
