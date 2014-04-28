@@ -26,27 +26,24 @@
   },
   "mkfifo": {
     "cmd": ["mkfifo", "tests/fish"],
-    "cwd": ["__dirname"],
     "stdout": "tests/logs/mkfifo.stdout",
+    "stderr": "tests/logs/mkfifo.stderr",
     "timeout": 30
   },
   "write": {
     "cmd": ["tests/fixtures/write.sh"],
-    "cwd": ["__dirname"],
     "stdout": "tests/logs/write.stdout",
     "depends": ["mkfifo"],
     "timeout": 30
   },
   "read": {
     "cmd": ["cat", "tests/fish"],
-    "cwd": ["__dirname"],
     "stdout": "tests/logs/read.stdout",
     "depends": ["write"],
     "timeout": 30
   },
   "clean": {
     "cmd": ["rm", "tests/fish"],
-    "cwd": ["__dirname"],
     "stdout": "tests/logs/clean.stdout",
     "depends": ["read"],
     "timeout": 30
