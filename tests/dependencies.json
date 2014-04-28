@@ -33,21 +33,21 @@
   "write": {
     "cmd": ["tests/fixtures/write.sh"],
     "cwd": ["__dirname"],
-    "log_file": "tests/logs/write.stdout",
+    "stdout": "tests/logs/write.stdout",
     "depends": ["mkfifo"],
     "timeout": 30
   },
   "read": {
     "cmd": ["cat", "tests/fish"],
     "cwd": ["__dirname"],
-    "log_file": "tests/logs/read.stdout",
+    "stdout": "tests/logs/read.stdout",
     "depends": ["write"],
     "timeout": 30
   },
   "clean": {
     "cmd": ["rm", "tests/fish"],
     "cwd": ["__dirname"],
-    "log_file": "tests/logs/clean.stdout",
+    "stdout": "tests/logs/clean.stdout",
     "depends": ["read"],
     "timeout": 30
   }
