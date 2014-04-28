@@ -28,7 +28,7 @@ function kill_em() {
 
 process.on('exit', kill_em);
 
-module.exports = function(targets) {
+module.exports = function(targets, source) {
   error = null;
 
   return function ready(callback) {
@@ -37,7 +37,7 @@ module.exports = function(targets) {
 };
 
 
-function dependencies(targets) {
+function dependencies(targets, source) {
   var
     dependencies = require(source || path.resolve(process.cwd(), 'tests/dependencies')),
     r = {};
