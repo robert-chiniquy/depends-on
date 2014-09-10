@@ -16,7 +16,7 @@
     "longjohn": "~0.2.2"
   },
   "scripts": {
-    "test": "node tests/test.js"
+    "test": "node tests/test.js && (cd tests ; node test.js)"
   },
   "repository": "git@github.com:robert-chiniquy/depends-on.git",
   "author": "Robert Chiniquy",

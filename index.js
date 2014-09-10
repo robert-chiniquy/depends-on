@@ -38,9 +38,27 @@ module.exports = function(targets, source) {
 
 
 function dependencies(targets, source) {
-  var
-    dependencies = require(source || path.resolve(process.cwd(), 'tests/dependencies')),
-    r = {};
+  var dependencies, r = {};
+
+  // TODO: deal with possible dependencies.js filename
+  if (source) {
+    dependencies = require(source);
+  } else if (fs.existsSync(path.resolve(process.cwd(), 'tests/dependencies.json'))) {
+    dependencies = require(path.resolve(process.cwd(), 'tests/dependencies'));
+  } else {
+    var where = process.cwd();
+    do {
+      if (fs.existsSync(path.resolve(where, 'dependencies.json'))) {
+        dependencies = require(path.resolve(where, 'dependencies'));
+        process.chdir(path.resolve(where + '/..'));
+        break;
+      }
+    } while ((where = path.resolve(where + '/..')) != '/');   
+  }
+
+  if (!dependencies) {
+    throw(new Error('dependencies.json not found'));
+  }
 
   _.each(dependencies, function(dep, name) {
     dep.depends = dep.depends || [];
