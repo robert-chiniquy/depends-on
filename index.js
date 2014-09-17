@@ -2,14 +2,11 @@ var net = require('net');
 var fs = require('fs');
 var path = require('path');
 var spawn = require('child_process').spawn;
-
 var async = require('async');
 var _ = require('underscore');
-
 var autotarget = require('async-autotarget');
 
-
-var child_processes = {}; // name -> ChildProcess
+var child_processes = {};
 var error = null;
 
 // this must be synchronous
@@ -32,12 +29,26 @@ module.exports = function(targets, source) {
   error = null;
 
   return function ready(callback) {
-    async.auto(dependencies(targets || [], source), callback);
+    var names = [];
+    var test = null;
+    if (typeof callback === 'object' && callback.test) {
+      test = callback;
+      callback = function() {
+        _.each(names, function(name) {
+          test.pass(name);
+        });
+        test.end();
+      }
+    }
+    async.auto(dependencies(targets || [], source, test), function(err, results) {
+      names = names.concat(_.keys(results));
+      callback(err);
+    });
   }
 };
 
 
-function dependencies(targets, source) {
+function dependencies(targets, source, test) {
   var dependencies, r = {};
 
   // TODO: deal with possible dependencies.js filename
@@ -65,7 +76,7 @@ function dependencies(targets, source) {
     if (child_processes[name]) {
       r[name] = dep.depends.concat([function(callback) { _.defer(callback); }]);
     } else {
-      r[name] = dep.depends.concat([spawn_one.bind(null, name, dep)]);
+      r[name] = dep.depends.concat([spawn_one.bind(null, name, dep, test)]);
     }
   });
 
@@ -73,7 +84,7 @@ function dependencies(targets, source) {
 }
 
 
-function spawn_one(name, what, callback) {
+function spawn_one(name, what, test, callback) {
   var
     cmd = what.cmd[0],
     args = what.cmd.slice(1),
@@ -87,11 +98,16 @@ function spawn_one(name, what, callback) {
     if (!_.isNull(code) && code !== 0) {
       var msg = name + " exited with code " + code;
       error = new Error(msg);
-      process.stderr.write(msg + '\n');
+      if (test) {
+        test.fail(msg);
+      } else {
+        process.stderr.write(msg + '\n');
+      }
       kill_em();
     } // else assume exit was intended
   });
 
+  // TODO exit before what.timeout if the child exits before socket is available
   if (what.wait_for) {
     new SocketWaiter(name, what.wait_for.host, what.wait_for.port, what.timeout, callback);
     return;
@@ -104,7 +120,12 @@ function spawn_one(name, what, callback) {
     } else if (child.exitCode) {
       error = new Error(name + " exited with code " + child.exitCode);
     }
-    callback(error);
+    if (test && error) {
+      test.fail(error);
+      callback(null, name);
+      return;
+    }
+    callback(error, name);
   }, 100); // one tick is not enough
 }
 

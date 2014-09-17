@@ -39,7 +39,7 @@ Dependencies can have dependencies. Say you want to clear all values from Redis 
       "port": 6379
     }
   },
-  "fresh redis": {
+  "fresh & clean redis": {
     "cmd": ["./bin/flushall.sh"],
     "depends": ["redis"]
   }
@@ -47,11 +47,11 @@ Dependencies can have dependencies. Say you want to clear all values from Redis 
 ```
 
 ```javascript
-var ready = require('depends-on')('fresh redis');
+var ready = require('depends-on')('fresh & clean redis');
 …
 ```
 
-If multiple tests share dependencies, depends-on will share them across the test files. When node exits, all dependencies will exit.
+If multiple tests share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will exit.
 
 why not use a bash script or Makefile?
 ======================================
