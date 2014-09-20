@@ -1,52 +1,32 @@
 
 require('longjohn');
-var ready = require('../')('true'); // for the process.on('exit', …); to be before tape's
+var ready = require('..')('true'); // for the process.on('exit', …); to be before tape's
 var test = require('tape');
 
 test('ready', ready);
 
-test('passing test obj directly to ready()', function(t) {
-  require('../')('clean')(t);
-});
+test('passing test obj directly to ready()', require('..')('clean'));
 
-test('basic sequence including a fifo', function(t) {
-  require('../')('clean')(function(err) {
-    t.error(err);
-    t.end();
-  });
-});
+test('basic sequence including a fifo', require('..')('clean'));
 
-test('noise on stdout and stderr', function(t) {
-  require('../')('noise to stderr')(function(err) {
-    t.error(err);
-    t.end();
-  });
-});
+test('noise on stdout and stderr', require('..')('noise to stderr'));
 
-test('true', function(t) {
-  require('../')('true')(function(err) {
-    t.error(err);
-    t.end();
-  });
-});
+test('true', require('..')('true'));
 
 test('false', function(t) {
-  require('../')('false')(function(err) {
+  require('..')('false')(function(err) {
     t.ok(err, "non-zero exit returns an error when a callback is passed to ready()");
     t.end();
   });
 });
 
-test('wait for socket', function(t) {
-  require('../')('write to the port')(function(err) {
-    t.error(err, "No error returned");
-    t.end();
-  });
-});
+test('wait for socket', require('..')('write to the port'));
 
 test('custom filename', function(t) {
-  require('../', 'custom-dependencies')()(function(err) {
+  require('..', 'custom-dependencies')()(function(err) {
+    t.error(err, "Non-existent custom dependencies returns error"); // doesn't exist
     t.end();
   });
 });
 
+test('test SIGKILL', require('../')(['catch-signals']));

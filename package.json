@@ -7,9 +7,10 @@
     "test": "tests"
   },
   "dependencies": {
-    "async-autotarget": "~0.0.1",
     "async": "~0.2.10",
-    "underscore": "~1.5.2"
+    "async-autotarget": "~0.0.1",
+    "resolve": "^1.0.0",
+    "underscore": "^1.7.0"
   },
   "devDependencies": {
     "tape": "~2.3.2",

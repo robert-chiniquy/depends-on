@@ -1,154 +1,228 @@
-var net = require('net');
 var fs = require('fs');
+var net = require('net');
 var path = require('path');
 var spawn = require('child_process').spawn;
 var async = require('async');
 var _ = require('underscore');
+var resolve = require('resolve');
 var autotarget = require('async-autotarget');
 
-var child_processes = {};
-var error = null;
+exports = module.exports = function depends_on(targets, source) {
+  var d = get_dependencies(source ? path.resolve(source) : undefined);
+  return d.get_ready(targets).bind(d);
+};
 
-// this must be synchronous
-function kill_em() {
-  _.each(child_processes, function(child, name) {
-    if (child._handle) {
-      child.kill('SIGTERM');
-      // signalCode won't be set until the process has actually exited
-      if (! (child.exitCode || child.signalCode)) {
-        child.kill('SIGKILL');
-      }
-    }
+process.on('exit', stop);
+
+function stop() {
+  _.each(get_dependency.cache, function(what, name) {
+    what.kill();
   });
-  child_processes = {};
+};
+module.exports.stop = stop; // TODO offer async stop method also
+
+var get_dependencies = _.memoize(function(source) {
+  return new Dependencies(source);
+});
+
+function Dependencies(source) {
+  if (source) {
+    this.source = path.resolve(source);
+  } else {
+    this.source = resolve.sync('dependencies', { moduleDirectory: 'tests', extensions: ['.json', '.js'] });
+  }
+  this.dependencies = require(this.source);
+
+  this.cwd = this.source.match(/tests/) ? path.resolve(this.source, '..') : this.source;
+  this.targets = {};
+  process.chdir(this.cwd);
 }
 
-process.on('exit', kill_em);
-
-module.exports = function(targets, source) {
-  error = null;
+Dependencies.prototype.get_ready = function(targets) {
+  var self = this;
 
   return function ready(callback) {
     var names = [];
-    var test = null;
+
     if (typeof callback === 'object' && callback.test) {
-      test = callback;
-      callback = function() {
+      self.test = callback;
+      callback = function(err) {
+        self.test.error(err, "No error");
         _.each(names, function(name) {
-          test.pass(name);
+          self.test.pass(name);
         });
-        test.end();
+        self.test.end();
       }
+    } else {
+      self.test = null;
     }
-    async.auto(dependencies(targets || [], source, test), function(err, results) {
+
+    _.each(self.dependencies, function(what, name) {
+      var d = get_dependency(name, what);
+
+      what.depends = what.depends || [];
+
+      // adjust paths relative to directory of dependencies.json
+      if (what.stdout && what.stdout[0] !== '/') {
+        if (self.source.match(/tests/)) {
+          what.stdout = path.resolve(path.dirname(path.relative(self.source, '..')), what.stdout);
+        } else {
+          what.stdout = path.resolve(path.dirname(self.source), what.stdout);
+        }
+      }
+
+      if (what.stderr && what.stderr[0] !== '/') {
+        if (self.source.match(/tests/)) {
+          what.stderr = path.resolve(path.dirname(path.relative(self.source, '..')), what.stderr);
+        } else {
+          what.stderr = path.resolve(path.dirname(self.source), what.stderr);
+        }
+      }
+
+      if (!what.cwd || what.cwd[0] !== '/') {
+        what.cwd = what.cwd || '.';
+        if (self.source.match(/tests/)) {
+          what.cwd = path.resolve(path.dirname(path.relative(self.source, '..')), what.cwd);
+        } else {
+          what.cwd = path.resolve(path.dirname(self.source), what.cwd);
+        }
+      }
+
+      self.targets[name] = what.depends.concat([d.spawn.bind(d, self.test)])
+    });
+
+    targets = targets || [];
+    if (targets.length) {
+      self.targets = autotarget(self.targets, targets);
+    }
+
+
+    async.auto(self.targets, function(err, results) {
       names = names.concat(_.keys(results));
       callback(err);
     });
+
   }
 };
 
+var get_dependency = _.memoize(function(name, what) {
+  return new Dependency(name, what);
+});
 
-function dependencies(targets, source, test) {
-  var dependencies, r = {};
-
-  // TODO: deal with possible dependencies.js filename
-  if (source) {
-    dependencies = require(source);
-  } else if (fs.existsSync(path.resolve(process.cwd(), 'tests/dependencies.json'))) {
-    dependencies = require(path.resolve(process.cwd(), 'tests/dependencies'));
-  } else {
-    var where = process.cwd();
-    do {
-      if (fs.existsSync(path.resolve(where, 'dependencies.json'))) {
-        dependencies = require(path.resolve(where, 'dependencies'));
-        process.chdir(path.resolve(where + '/..'));
-        break;
-      }
-    } while ((where = path.resolve(where + '/..')) != '/');   
-  }
-
-  if (!dependencies) {
-    throw(new Error('dependencies.json not found'));
-  }
-
-  _.each(dependencies, function(dep, name) {
-    dep.depends = dep.depends || [];
-    if (child_processes[name]) {
-      r[name] = dep.depends.concat([function(callback) { _.defer(callback); }]);
-    } else {
-      r[name] = dep.depends.concat([spawn_one.bind(null, name, dep, test)]);
-    }
-  });
-
-  return targets.length ? autotarget(r, targets) : r;
+function Dependency(name, what) {
+  this.name = name;
+  this.what = what;
+  this.child = null;
+  this.spawned = false; // TODO explicit state machine
+  this.error = null;
 }
 
+Dependency.prototype.kill = function() {
+  // TODO think about clearing timer? setting error?
+  if (!this.child) {
+    return;
+  }
+  if (!this.child._handle) {
+    return;
+  }
+  if (this.child.signalCode || this.child.exitCode) {
+    return;
+  }
+  this.child.removeAllListeners('exit');
+  this.child.kill(this.what.signal || 'SIGTERM');
+};
 
-function spawn_one(name, what, test, callback) {
+Dependency.prototype.spawn = function(test, callback) {
   var
-    cmd = what.cmd[0],
-    args = what.cmd.slice(1),
-    child = child_processes[name] = spawn(cmd, args, {
-      'cwd': what.cwd,
-      'stdio': [0, what.stdout && fs.openSync(what.stdout, 'a') || 1, what.stderr && fs.openSync(what.stderr, 'a') || 2]
-    });
+    self = this,
+    cmd = this.what.cmd[0],
+    args = this.what.cmd.slice(1);
 
-  child.unref(); // don't block the event loop, children will be signalled on exit
-  child.on('exit', function(code, signal) {
+  if (this.spawned) {
+    if (test) {
+      test.pass(this.name + " already started");
+    }
+    _.defer(callback);
+    return;
+  }
+  this.spawned = true;
+
+  this.child = spawn(cmd, args, {
+    'cwd': this.what.cwd,
+    'stdio': [ 0, 
+      this.what.stdout && fs.openSync(this.what.stdout, 'a') || 1, 
+      this.what.stderr && fs.openSync(this.what.stderr, 'a') || 2]
+  });
+
+  this.child.unref(); // don't block the event loop, children will be signalled on exit
+
+  this.child.on('exit', function(code, signal) {
+    var msg;
     if (!_.isNull(code) && code !== 0) {
-      var msg = name + " exited with code " + code;
-      error = new Error(msg);
+      msg = self.name + " exited with code " + code;
+      self.error = new Error(msg);
+    }
+
+    if (msg) {
       if (test) {
         test.fail(msg);
       } else {
         process.stderr.write(msg + '\n');
       }
-      kill_em();
-    } // else assume exit was intended
+      stop();
+    }
   });
 
   // TODO exit before what.timeout if the child exits before socket is available
-  if (what.wait_for) {
-    new SocketWaiter(name, what.wait_for.host, what.wait_for.port, what.timeout, callback);
+  if (this.what.wait_for) { // TODO should be a subtype of Dependency
+    this.waitOnSocket(callback);
     return;
   }
 
-  // This function lets us return an err to callback() if `cmd` exited non-zero somewhat immediately
-  setTimeout(function() {
-    if (child.signalCode) {
-      error = new Error(name + " exited after signal " + child.signalCode);
-    } else if (child.exitCode) {
-      error = new Error(name + " exited with code " + child.exitCode);
-    }
-    if (test && error) {
-      test.fail(error);
-      callback(null, name);
+  // This lets us return an err to callback() if `cmd` exited non-zero somewhat immediately
+  this.timer = setTimeout(function() {
+    if (self.child.signalCode || self.child.exitCode) {
+      if (self.waiter) {
+        self.waiter.error();
+      }
+      if (self.child.signalCode) {
+        self.error = new Error(self.name + " exited after signal " + self.child.signalCode);
+      } else if (self.child.exitCode) {
+        self.error = new Error(self.name + " exited with code " + self.child.exitCode);
+      }
+      if (test && self.error) {
+        test.fail(self.error);
+        callback(null, self.name);
+        return;
+      }
+      callback(self.error, self.name);
       return;
     }
-    callback(error, name);
+    callback(null, self.name);
   }, 100); // one tick is not enough
-}
+};
 
-
-function SocketWaiter(name, host, port, timeout, callback) {
+Dependency.prototype.waitOnSocket = function(callback) {
   var
-    found = false,
+    self = this,
+    found = false, // state machine?
     start = new Date().getTime();
 
   function retry(callback) {
-    if (new Date().getTime() - start > timeout * 1000) {
-      callback(new Error("Timed out waiting for " + name));
+    if (new Date().getTime() - start > self.what.wait_for.timeout * 1000) {
+      callback(new Error("Timed out waiting for " + self.name));
       return;
     }
     setTimeout(callback, 1000);
   }
 
   callback = _.once(callback);
+
   async.until(function() {
-    return found || error;
+    return found || this.error;
   }, function(callback) {
     var
-      socket = net.connect(port, host),
+      socket = net.connect(self.what.wait_for.port, self.what.wait_for.host),
       id = setTimeout(function() {
         socket.destroy();
         retry(callback);
@@ -160,11 +234,13 @@ function SocketWaiter(name, host, port, timeout, callback) {
       socket.end();
       callback();
     });
+
     socket.on('error', function(err) {
       clearTimeout(id);
       retry(callback);
     });
+
   }, function(err) {
-    callback(err || error);
+    callback(err || this.error);
   });
-}
+};

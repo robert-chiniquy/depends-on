@@ -47,5 +47,11 @@
     "stdout": "tests/logs/clean.stdout",
     "depends": ["read"],
     "timeout": 30
+  },
+  "catch-signals": {
+    "cmd": ["tests/fixtures/catch-signals.js"],
+    "stdout": "tests/logs/catch-signals.log",
+    "signal": "SIGKILL",
+    "timeout": 900
   }
 }
