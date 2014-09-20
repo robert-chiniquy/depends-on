@@ -12,7 +12,12 @@ exports = module.exports = function depends_on(targets, source) {
   return d.get_ready(targets).bind(d);
 };
 
-process.on('exit', stop);
+process.on('exit', stop); // this must be called at module scope because tape's process.on('exit', …) handler calls process.exit()
+
+process.on('uncaughtException', function(err) {
+  stop();
+  throw err;
+});
 
 function stop() {
   _.each(get_dependency.cache, function(what, name) {
@@ -96,12 +101,10 @@ Dependencies.prototype.get_ready = function(targets) {
       self.targets = autotarget(self.targets, targets);
     }
 
-
     async.auto(self.targets, function(err, results) {
       names = names.concat(_.keys(results));
       callback(err);
     });
-
   }
 };
 
