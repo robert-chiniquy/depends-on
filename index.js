@@ -36,15 +36,26 @@ function Dependencies(source) {
   } else {
     this.source = resolve.sync('dependencies', { moduleDirectory: 'tests', extensions: ['.json', '.js'] });
   }
-  this.dependencies = require(this.source);
+  
+  try {
+    this.dependencies = require(this.source);
+    this.cwd = this.source.match(/tests/) ? path.resolve(this.source, '..') : this.source;
+    process.chdir(this.cwd); 
+  } catch (e) {
+    this.error = e;
+  }
 
-  this.cwd = this.source.match(/tests/) ? path.resolve(this.source, '..') : this.source;
   this.targets = {};
-  process.chdir(this.cwd);
 }
 
 Dependencies.prototype.get_ready = function(targets) {
   var self = this;
+
+  if (this.error) {
+    return function ready(callback) {
+      callback(this.error);
+    }
+  }
 
   return function ready(callback) {
     var names = [];

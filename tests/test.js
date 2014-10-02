@@ -23,8 +23,8 @@ test('false', function(t) {
 test('wait for socket', require('..')('write to the port'));
 
 test('custom filename', function(t) {
-  require('..', 'custom-dependencies')()(function(err) {
-    t.error(err, "Non-existent custom dependencies returns error"); // doesn't exist
+  require('..')('fake target', 'custom-dependencies')(function(err) {
+    t.ok(err, "Non-existent custom dependencies returns error"); // doesn't exist
     t.end();
   });
 });
