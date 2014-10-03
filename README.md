@@ -79,7 +79,7 @@ If multiple tests share dependencies, depends-on will share them across the test
 <dd>path to log dependency's stderr to (default: your stderr)</dd>
 
 <dt>signal</dt>
-<dd>signal to use to tell the dependency to shut down (default: `SIGTERM`</dd>
+<dd>signal to use to tell the dependency to shut down (default: `SIGTERM`)</dd>
 
 <dt>wait_for</dt>
 <dd>lets you specify an ip:port and timeout to wait for socket availability before considering a dependency started</dd>
