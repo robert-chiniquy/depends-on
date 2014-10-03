@@ -9,9 +9,9 @@
     "cmd": ["tests/fixtures/bind-port.js", "9897"],
     "wait_for": {
       "host": "127.0.0.1",
-      "port": 9897
-    },
-    "timeout": 60
+      "port": 9897,
+      "timeout": 60
+    }
   },
   "write to the port": {
     "cmd": ["tests/fixtures/write-to-port.js", "9897", "hello socket"],
@@ -27,31 +27,26 @@
   "mkfifo": {
     "cmd": ["mkfifo", "tests/fish"],
     "stdout": "tests/logs/mkfifo.stdout",
-    "stderr": "tests/logs/mkfifo.stderr",
-    "timeout": 30
+    "stderr": "tests/logs/mkfifo.stderr"
   },
   "write": {
     "cmd": ["tests/fixtures/write.sh"],
     "stdout": "tests/logs/write.stdout",
-    "depends": ["mkfifo"],
-    "timeout": 30
+    "depends": ["mkfifo"]
   },
   "read": {
     "cmd": ["cat", "tests/fish"],
     "stdout": "tests/logs/read.stdout",
-    "depends": ["write"],
-    "timeout": 30
+    "depends": ["write"]
   },
   "clean": {
     "cmd": ["rm", "tests/fish"],
     "stdout": "tests/logs/clean.stdout",
-    "depends": ["read"],
-    "timeout": 30
+    "depends": ["read"]
   },
   "catch-signals": {
     "cmd": ["tests/fixtures/catch-signals.js"],
     "stdout": "tests/logs/catch-signals.log",
-    "signal": "SIGKILL",
-    "timeout": 900
+    "signal": "SIGKILL"
   }
 }

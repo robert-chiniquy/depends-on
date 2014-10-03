@@ -58,6 +58,13 @@ Dependencies.prototype.get_ready = function(targets) {
 
   if (this.error) {
     return function ready(callback) {
+      if (typeof callback === 'object' && callback.test) {
+        self.test = callback;
+        callback = function(err) {
+          self.test.error(err, "No error has already occurred");
+          self.test.end();
+        };
+      }
       callback(this.error);
     }
   }
@@ -75,7 +82,7 @@ Dependencies.prototype.get_ready = function(targets) {
           });
         }
         self.test.end();
-      }
+      };
     } else {
       self.test = null;
     }
@@ -123,7 +130,7 @@ function Dependency(name, what) {
   this.name = name;
   this.what = what;
   this.child = null;
-  this.spawned = false; // TODO explicit state machine
+  this.spawned = false; // TODO explicit state machine <——
   this.error = null;
 }
 
@@ -199,8 +206,8 @@ Dependency.prototype.spawn = function(test, callback) {
     }
   });
 
-  // TODO exit before what.timeout if the child exits before socket is available
   if (this.what.wait_for) { // TODO should be a subtype of Dependency
+    this.what.wait_for.timeout = this.what.wait_for.timeout || 30;
     this.waitOnSocket(callback);
     return;
   }
