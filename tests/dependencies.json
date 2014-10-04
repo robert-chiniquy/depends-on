@@ -6,7 +6,7 @@
     "cmd": ["true"]
   },
   "bind a port": {
-    "cmd": ["tests/fixtures/bind-port.js", "9897"],
+    "cmd": ["./fixtures/bind-port.js", "9897"],
     "wait_for": {
       "host": "127.0.0.1",
       "port": 9897,
@@ -14,39 +14,39 @@
     }
   },
   "write to the port": {
-    "cmd": ["tests/fixtures/write-to-port.js", "9897", "hello socket"],
+    "cmd": ["./fixtures/write-to-port.js", "9897", "hello socket"],
     "depends": ["bind a port"]
   },
   "noise to stdout": {
     "cmd": ["echo", "hello there stdout"]
   },
   "noise to stderr": {
-    "cmd": ["tests/fixtures/noise-to-stderr.sh"],
+    "cmd": ["./fixtures/noise-to-stderr.sh"],
     "depends": ["noise to stdout"]
   },
   "mkfifo": {
-    "cmd": ["mkfifo", "tests/fish"],
-    "stdout": "tests/logs/mkfifo.stdout",
-    "stderr": "tests/logs/mkfifo.stderr"
+    "cmd": ["mkfifo", "./fish"],
+    "stdout": "./logs/mkfifo.stdout",
+    "stderr": "./logs/mkfifo.stderr"
   },
   "write": {
-    "cmd": ["tests/fixtures/write.sh"],
-    "stdout": "tests/logs/write.stdout",
+    "cmd": ["./fixtures/write.sh"],
+    "stdout": "./logs/write.stdout",
     "depends": ["mkfifo"]
   },
   "read": {
-    "cmd": ["cat", "tests/fish"],
-    "stdout": "tests/logs/read.stdout",
+    "cmd": ["cat", "./fish"],
+    "stdout": "./logs/read.stdout",
     "depends": ["write"]
   },
   "clean": {
-    "cmd": ["rm", "tests/fish"],
-    "stdout": "tests/logs/clean.stdout",
+    "cmd": ["rm", "./fish"],
+    "stdout": "./logs/clean.stdout",
     "depends": ["read"]
   },
   "catch-signals": {
-    "cmd": ["tests/fixtures/catch-signals.js"],
-    "stdout": "tests/logs/catch-signals.log",
+    "cmd": ["./fixtures/catch-signals.js"],
+    "stdout": "./logs/catch-signals.log",
     "signal": "SIGKILL"
   }
 }

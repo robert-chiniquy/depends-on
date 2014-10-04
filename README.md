@@ -1,7 +1,7 @@
 depends-on
 ==========
 
-Spins up external processes your tests need.
+Spins up external processes your tests need. Think of it as `async.auto` with process control for testing.
 
 example:
 ========
@@ -61,7 +61,7 @@ test('test that uses redis', function(t) {
 If multiple tests share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will exit.
 
 ## dependencies.json 
-`dependencies.json` is an object mapping dependency names to objects that describe each dependency.
+`dependencies.json` is a file containing a json object mapping dependency names to objects that describe each dependency.
 
 ### dependency fields
 
@@ -71,6 +71,9 @@ If multiple tests share dependencies, depends-on will share them across the test
 
 <dt>depends</dt>
 <dd>array of names of dependencies which this dependency depends on</dd>
+
+<dt>cwd</dt>
+<dd>The cwd to pass to child_process.spawn</dd>
 
 <dt>stdout</dt>
 <dd>path to log dependency's stdout to (default: your stdout)</dd>
@@ -105,5 +108,5 @@ If multiple tests share dependencies, depends-on will share them across the test
 why not use a bash script or Makefile?
 ======================================
 
-I like to be able to run tests individually like `$ node tests.js` without running anything else or relying on something coincidentally running.
+I like to be able to run integration tests individually like `$ node tests.js` without running anything else or relying on some external service coincidentally being on.
 

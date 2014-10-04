@@ -12,11 +12,23 @@ exports = module.exports = function depends_on(targets, source) {
   return d.get_ready(targets).bind(d);
 };
 
-process.on('exit', stop); // this must be called at module scope because tape's process.on('exit', …) handler calls process.exit()
+// this must be called at module scope because tape's process.on('exit', …) handler calls process.exit()
+// this is also why you should require('depends-on') before you require('tape')
+process.on('exit', stop);
 
 process.on('uncaughtException', function(err) {
+  process.stderr.write(err.stack + '\n');
   stop(err);
   throw err;
+});
+
+process.on('SIGINT', function() {
+  _.each(get_dependency.cache, function(what, name) {
+    if (what.child) {
+      what.child.kill('SIGINT');
+    }
+  });
+  throw new Error('SIGINT');
 });
 
 function stop(reason) {
@@ -43,13 +55,11 @@ function Dependencies(source) {
   
   try {
     this.dependencies = require(this.source);
-    this.cwd = this.source.match(/tests/) ? path.dirname(path.dirname(this.source)) : path.dirname(this.source);
-    this.old_cwd = process.cwd(); // FIXME doing anything with cwd is a mistake
-    process.chdir(this.cwd); 
   } catch (e) {
     this.error = e;
   }
-
+  // this.source is always a filepath so all paths in that file should be relative to its directory
+  this.cwd = path.dirname(this.source);
   this.targets = {};
 }
 
@@ -57,7 +67,7 @@ Dependencies.prototype.get_ready = function(targets) {
   var self = this;
 
   if (this.error) {
-    return function ready(callback) {
+    return function already(callback) {
       if (typeof callback === 'object' && callback.test) {
         self.test = callback;
         callback = function(err) {
@@ -82,14 +92,15 @@ Dependencies.prototype.get_ready = function(targets) {
           });
         }
         self.test.end();
+        if (err) {
+          throw err;
+        }
       };
     } else {
       self.test = null;
     }
 
     _.each(self.dependencies, function(what, name) {
-      var d = get_dependency(name, what);
-
       what.depends = what.depends || [];
 
       // adjust paths relative to directory of dependencies.json
@@ -102,10 +113,11 @@ Dependencies.prototype.get_ready = function(targets) {
       }
 
       if (!what.cwd || what.cwd[0] !== '/') {
-        what.cwd = what.cwd || '.';
+        what.cwd = what.cwd || self.cwd;
         what.cwd = path.resolve(self.cwd, what.cwd);
       }
 
+      var d = get_dependency(name, what, self.cwd);
       self.targets[name] = what.depends.concat([d.spawn.bind(d, self.test)])
     });
 
@@ -116,7 +128,6 @@ Dependencies.prototype.get_ready = function(targets) {
 
     async.auto(self.targets, function(err, results) {
       names = names.concat(_.keys(results));
-      process.chdir(self.old_cwd);
       callback(err);
     });
   }
@@ -162,7 +173,7 @@ Dependency.prototype.spawn = function(test, callback) {
 
   if (this.error) {
     if (test) {
-      test.fail(this.error);
+      test.fail(this.error); // todo should this.error be set to null after use? need a state machine :/
     }
     _.defer(function() {
       callback(test ? null : self.error); // don't callback(self.error) if we called test.fail instead
