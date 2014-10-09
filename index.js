@@ -42,17 +42,20 @@ var get_dependencies = _.memoize(function(source) {
   return new Dependencies(source);
 });
 
-function Dependencies(source) {
+function find_dependencies(source) {
   if (source) {
-    this.source = path.resolve(source);
-  } else {
-    this.source = resolve.sync('dependencies', { 
-      basedir: process.cwd(),
-      moduleDirectory: 'tests', 
-      extensions: ['.json', '.js'] 
-    });
+    return path.resolve(source);
   }
-  
+  return resolve.sync('dependencies', { 
+    basedir: process.cwd(),
+    moduleDirectory: 'tests', 
+    extensions: ['.json', '.js'] 
+  });  
+}
+module.exports.find = find_dependencies;
+
+function Dependencies(source) {
+  this.source = find_dependencies(source);
   try {
     this.dependencies = require(this.source);
   } catch (e) {
@@ -143,6 +146,7 @@ function Dependency(name, what) {
   this.child = null;
   this.spawned = false; // TODO explicit state machine <——
   this.error = null;
+  this.test = null;
 }
 
 Dependency.prototype.kill = function(reason) {
@@ -156,7 +160,7 @@ Dependency.prototype.kill = function(reason) {
     return;
   }
   if (reason) {
-    process.stderr.write('Killing '+ this.name + " (because " + reason + ')\n');
+    process.stderr.write('Killing '+ this.name + " (because " + reason + ' )\n');
   }
   if (!this.error) {
     this.error = this.name + " killed" + (reason ? " because " + reason : '');
@@ -170,6 +174,8 @@ Dependency.prototype.spawn = function(test, callback) {
     self = this,
     cmd = this.what.cmd[0],
     args = this.what.cmd.slice(1);
+
+  this.test = test;
 
   if (this.error) {
     if (test) {
@@ -293,6 +299,9 @@ Dependency.prototype.waitOnSocket = function(callback) {
     });
 
   }, function(err) {
+    if (self.test) {
+      self.test.pass(self.name +' started in '+ (new Date().getTime() - start) +'ms');
+    }
     callback(err || this.error);
   });
 };
