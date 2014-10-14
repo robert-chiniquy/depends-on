@@ -91,13 +91,18 @@ If multiple tests share dependencies, depends-on will share them across the test
 
 ### wait_for fields
 
+One of `port` or `exit_code` is required.
+
 <dl>
 
 <dt>host</dt>
-<dd></dd>
+<dd>default: localhost</dd>
 
 <dt>port</dt>
-<dd></dd>
+<dd>if port is set, will wait for a TCP connection to be accepted on this port</dd>
+
+<dt>exit_code</dt>
+<dd>if exit_code is set, will wait for the process to exit with this code before proceeding</dd>
 
 <dt>timeout</dt>
 <dd>seconds to wait before considering a dependency to have failed starting up (default: 30)</dd>
@@ -105,8 +110,18 @@ If multiple tests share dependencies, depends-on will share them across the test
 </dl>
 
 
-why not use a bash script or Makefile?
-======================================
+### using with tape
+Be sure to `require('depends-on')` before you `require('tape')` like this:
+
+```javascript
+var ready = require('depends-on')('redis');
+var test = require('tape');
+```
+
+Both depends-on and tape have `process.on('exit', …)` handlers, but tape calls `process.exit` in its `process.on('exit', …)` handler, so if tape's handler runs first, depends-on's handler will never run (and child processes won't be cleaned up). Handlers run in the order they are added, so depends-on must be required first.
+
+### why not use a bash script or Makefile?
+
 
 I like to be able to run integration tests individually like `$ node tests.js` without running anything else or relying on some external service coincidentally being on.
 

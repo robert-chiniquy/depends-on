@@ -160,9 +160,9 @@ Dependency.prototype.kill = function(reason) {
     return;
   }
   if (reason) {
-    process.stderr.write('Killing '+ this.name + " (because " + reason + ' )\n');
+    process.stderr.write('Killing '+ this.name + " because " + reason + '\n');
   }
-  if (!this.error) {
+  if (!this.error) { // todo: don't kill if this.error ?
     this.error = this.name + " killed" + (reason ? " because " + reason : '');
   }  
   this.child.removeAllListeners('exit');
@@ -206,6 +206,10 @@ Dependency.prototype.spawn = function(test, callback) {
   this.child.unref(); // don't block the event loop, children will be signalled on exit
 
   this.child.on('exit', function(code, signal) {
+    if (self.what.wait_for && code == self.what.wait_for.exit_code) {
+      return;
+    }
+
     var msg;
 
     if (!_.isNull(code) && code !== 0) {
@@ -223,9 +227,13 @@ Dependency.prototype.spawn = function(test, callback) {
     }
   });
 
-  if (this.what.wait_for) { // TODO should be a subtype of Dependency
+  if (this.what.wait_for) { // TODO should be subtypes of Dependency
     this.what.wait_for.timeout = this.what.wait_for.timeout || 30;
-    this.waitOnSocket(callback);
+    if (this.what.wait_for.port) {
+      this.waitOnSocket(callback);
+    } else if (this.what.wait_for.exit_code) {
+      this.waitOnExit(callback);
+    }
     return;
   }
 
@@ -305,3 +313,32 @@ Dependency.prototype.waitOnSocket = function(callback) {
     callback(err || this.error);
   });
 };
+
+// todo use an on('exit') handler
+Dependency.prototype.waitOnExit = function(callback) {
+  var
+    self = this,
+    start = new Date().getTime();
+
+  callback = _.once(callback);
+  async.until(function() {
+    return self.child.exitCode || (new Date().getTime() - start > self.what.wait_for.timeout * 1000)
+  }, function(callback) {
+    _.delay(callback, 500);
+  }, function(err) {
+    if (err) { // unreachable?
+      callback(err);
+      return;
+    }
+    if (self.child.exitCode == self.what.wait_for.exit_code) {
+      callback();
+      return;
+    } else if (self.child.exitCode) {
+      callback(new Error("Expected " + self.name + " to exit " + self.what.wait_for.exit_code + " but got " + self.child.exitCode));
+    } else {
+      callback(new Error("Timed out waiting for " + self.name));
+    }
+  });
+
+};
+

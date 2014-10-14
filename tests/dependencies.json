@@ -5,6 +5,12 @@
   "true": {
     "cmd": ["true"]
   },
+  "exit 17": {
+    "cmd": ["./fixtures/exit-17.sh"],
+    "wait_for": {
+      "exit_code": 17
+    }
+  },
   "bind a port": {
     "cmd": ["./fixtures/bind-port.js", "9897"],
     "wait_for": {

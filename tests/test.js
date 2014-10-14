@@ -30,3 +30,5 @@ test('custom filename', function(t) {
 });
 
 test('test SIGKILL', require('../')(['catch-signals']));
+
+test('wait for exit code', require('../')('exit 17'));
