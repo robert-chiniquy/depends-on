@@ -1,7 +1,7 @@
 depends-on
 ==========
 
-Spins up external processes your tests need. Think of it as `async.auto` with process control for testing.
+Spins up external processes your tests need. Think of it as `async.auto` with process control for integration tests.
 
 example:
 ========
@@ -33,7 +33,7 @@ Dependencies can have dependencies. Say you want to clear all values from Redis 
 
 ```json
 {
-  "redis": {
+  "redis-server": {
     "cmd": ["/usr/sbin/redis-server"],
     "wait_for": {
       "port": 6379
@@ -41,7 +41,10 @@ Dependencies can have dependencies. Say you want to clear all values from Redis 
   },
   "fresh & clean redis": {
     "cmd": ["./bin/flushall.sh"],
-    "depends": ["redis"]
+    "depends": ["redis-server"],
+    "wait_for": {
+      "exit_code": 0
+    }
   }
 }
 ```
@@ -58,7 +61,7 @@ test('test that uses redis', function(t) {
 …
 ```
 
-If multiple tests share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will exit.
+If multiple tests are `require()`d and share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will exit.
 
 ## dependencies.json 
 `dependencies.json` is a file containing a json object mapping dependency names to objects that describe each dependency.
@@ -91,7 +94,7 @@ If multiple tests share dependencies, depends-on will share them across the test
 
 ### wait_for fields
 
-One of `port` or `exit_code` is required.
+One of `port` or `exit_code` is required to use `wait_for`.
 
 <dl>
 
@@ -109,12 +112,12 @@ One of `port` or `exit_code` is required.
 
 </dl>
 
-
+## notes
 ### using with tape
-Be sure to `require('depends-on')` before you `require('tape')` like this:
+Be sure to `require('depends-on')` before you `require('tape')`. Like this:
 
 ```javascript
-var ready = require('depends-on')('redis');
+var ready = require('depends-on')('something');
 var test = require('tape');
 ```
 
