@@ -231,8 +231,10 @@ Dependency.prototype.spawn = function(test, callback) {
     this.what.wait_for.timeout = this.what.wait_for.timeout || 30;
     if (this.what.wait_for.port) {
       this.waitOnSocket(callback);
-    } else if (this.what.wait_for.exit_code) {
+    } else if (this.what.wait_for.exit_code !== undefined) {
       this.waitOnExit(callback);
+    } else {
+      throw new Error("`wait_for` is defined but has neither `port` nor `exit_code`!");
     }
     return;
   }
@@ -245,7 +247,7 @@ Dependency.prototype.spawn = function(test, callback) {
       }
       if (self.child.signalCode) {
         self.error = new Error(self.name + " exited after signal " + self.child.signalCode);
-      } else if (self.child.exitCode) {
+      } else if (self.child.exitCode !== undefined) {
         self.error = new Error(self.name + " exited immediately with code " + self.child.exitCode);
       }
       if (test && self.error) {
@@ -331,14 +333,16 @@ Dependency.prototype.waitOnExit = function(callback) {
       return;
     }
     if (self.child.exitCode == self.what.wait_for.exit_code) {
+      if (self.test) {
+        self.test.pass(self.name +' started in '+ (new Date().getTime() - start) +'ms');
+      }
       callback();
       return;
-    } else if (self.child.exitCode) {
+    } else if (self.child.exitCode !== undefined) {
       callback(new Error("Expected " + self.name + " to exit " + self.what.wait_for.exit_code + " but got " + self.child.exitCode));
     } else {
       callback(new Error("Timed out waiting for " + self.name));
     }
   });
-
 };
 
