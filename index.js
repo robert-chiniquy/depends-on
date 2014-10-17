@@ -270,7 +270,7 @@ Dependency.prototype.waitOnSocket = function(callback) {
 
   function retry(callback) {
     if (new Date().getTime() - start > self.what.wait_for.timeout * 1000) {
-      callback(new Error("Timed out after "+ (new Date().getTime() - start) +"waiting for " + self.name));
+      callback(new Error("Timed out after "+ (new Date().getTime() - start) +" waiting for " + self.name));
       return;
     }
     if (found) {
