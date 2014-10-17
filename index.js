@@ -89,13 +89,9 @@ Dependencies.prototype.get_ready = function(targets) {
       self.test = callback;
       callback = function(err) {
         self.test.error(err, "Dependencies start up");
-        if (!err) {
-          _.each(names, function(name) {
-            self.test.pass(name); // TODO: factor a bit so these can pass as each completes loading
-          });
-        }
         self.test.end();
         if (err) {
+          // good idea?
           throw err;
         }
       };
@@ -257,6 +253,9 @@ Dependency.prototype.spawn = function(test, callback) {
       }
       callback(self.error, self.name);
       return;
+    }
+    if (test) {
+      test.pass(self.name);
     }
     callback(null, self.name);
   }, 100); // one tick is not enough
