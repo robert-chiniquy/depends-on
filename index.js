@@ -270,7 +270,7 @@ Dependency.prototype.waitOnSocket = function(callback) {
 
   function retry(callback) {
     if (new Date().getTime() - start > self.what.wait_for.timeout * 1000) {
-      callback(new Error("Timed out waiting for " + self.name));
+      callback(new Error("Timed out after "+ new Date().getTime() - start +"waiting for " + self.name));
       return;
     }
     if (found) {
@@ -338,10 +338,10 @@ Dependency.prototype.waitOnExit = function(callback) {
       }
       callback();
       return;
-    } else if (self.child.exitCode !== undefined) {
+    } else if (self.child.exitCode !== null) {
       callback(new Error("Expected " + self.name + " to exit " + self.what.wait_for.exit_code + " but got " + self.child.exitCode));
     } else {
-      callback(new Error("Timed out waiting for " + self.name));
+      callback(new Error("Timed out after "+ (new Date().getTime() - start) +" waiting for " + self.name));
     }
   });
 };

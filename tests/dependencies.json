@@ -11,6 +11,13 @@
       "exit_code": 17
     }
   },
+  "take too long": {
+    "cmd": ["./fixtures/take-too-long.sh"],
+    "wait_for": {
+      "exit_code": 0,
+      "timeout": 2
+    }
+  },
   "bind a port": {
     "cmd": ["./fixtures/bind-port.js", "9897"],
     "wait_for": {
