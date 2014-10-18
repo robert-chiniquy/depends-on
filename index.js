@@ -319,11 +319,13 @@ Dependency.prototype.waitOnSocket = function(callback) {
 Dependency.prototype.waitOnExit = function(callback) {
   var
     self = this,
+    last,
     start = new Date().getTime();
 
   callback = _.once(callback);
   async.until(function() {
-    return self.child.exitCode || (new Date().getTime() - start > self.what.wait_for.timeout * 1000)
+    last = new Date().getTime() - start;
+    return self.child.exitCode || (last > self.what.wait_for.timeout * 1000)
   }, function(callback) {
     _.delay(callback, 500);
   }, function(err) {
@@ -333,7 +335,7 @@ Dependency.prototype.waitOnExit = function(callback) {
     }
     if (self.child.exitCode == self.what.wait_for.exit_code) {
       if (self.test) {
-        self.test.pass(self.name +' started in '+ (new Date().getTime() - start) +'ms');
+        self.test.pass(self.name +' started in '+ last);
       }
       callback();
       return;
