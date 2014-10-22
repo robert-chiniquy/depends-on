@@ -280,7 +280,7 @@ Dependency.prototype.waitOnSocket = function(callback) {
       callback(self.error);
       return;
     }
-    setTimeout(callback, 998);
+    return setTimeout(callback, 998);
   }
 
   callback = _.once(callback);
@@ -304,11 +304,11 @@ Dependency.prototype.waitOnSocket = function(callback) {
 
     socket.on('error', function(err) {
       clearTimeout(id);
-      retry(callback);
+      id = retry(callback);
     });
 
   }, function(err) {
-    if (self.test) {
+    if (self.test && !err) {
       self.test.pass(self.name +' started in '+ (new Date().getTime() - start) +'ms');
     }
     callback(err || this.error);
