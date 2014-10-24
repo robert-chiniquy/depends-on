@@ -83,12 +83,14 @@ Dependencies.prototype.get_ready = function(targets) {
   }
 
   return function ready(callback) {
-    var names = [];
+    var
+      start = new Date().getTime(),
+      names = [];
 
     if (typeof callback === 'object' && callback.test) {
       self.test = callback;
       callback = function(err) {
-        self.test.error(err, "Dependencies start up");
+        self.test.error(err, "Dependencies start up after " + (new Date().getTime() - start) + " ms");
         self.test.end();
         if (err) {
           // good idea?
@@ -116,8 +118,9 @@ Dependencies.prototype.get_ready = function(targets) {
         what.cwd = path.resolve(self.cwd, what.cwd);
       }
 
+      // TODO validate existence
       var d = get_dependency(name, what, self.cwd);
-      self.targets[name] = what.depends.concat([d.spawn.bind(d, self.test)])
+      self.targets[name] = what.depends.concat([d.spawn.bind(d, self.test)]);
     });
 
     targets = targets || [];
