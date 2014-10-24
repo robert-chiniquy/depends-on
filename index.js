@@ -283,7 +283,7 @@ Dependency.prototype.waitOnSocket = function(callback) {
       callback(self.error);
       return;
     }
-    return setTimeout(callback, 998);
+    return setTimeout(callback, 198);
   }
 
   callback = _.once(callback);
@@ -296,7 +296,7 @@ Dependency.prototype.waitOnSocket = function(callback) {
       id = setTimeout(function() {
         socket.destroy();
         retry(callback);
-      }, 999);
+      }, 199);
 
     socket.on('connect', function() {
       found = true;
@@ -330,7 +330,7 @@ Dependency.prototype.waitOnExit = function(callback) {
     last = new Date().getTime() - start;
     return self.child.exitCode || (last > self.what.wait_for.timeout * 1000)
   }, function(callback) {
-    _.delay(callback, 500);
+    _.delay(callback, 101);
   }, function(err) {
     if (err) { // unreachable?
       callback(err);
