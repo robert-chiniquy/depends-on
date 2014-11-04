@@ -1,6 +1,8 @@
 depends-on
 ==========
 
+[![Build Status](https://travis-ci.org/robert-chiniquy/depends-on.svg?branch=master)](https://travis-ci.org/robert-chiniquy/depends-on)
+
 Spins up external processes your tests need. Think of it as `async.auto` with process control for integration tests.
 
 example:
