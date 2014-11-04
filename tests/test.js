@@ -37,6 +37,8 @@ test('test SIGKILL', require('../')(['catch-signals']));
 
 test('wait for exit code', require('../')('exit 17'));
 
+test('wait for exit code specified by string', require('../')('exit 17 wait_for string'));
+
 test('timeout', function(t) {
   require('../')('take too long')(function(err) {
     t.ok(err, "error returned on timeout");
