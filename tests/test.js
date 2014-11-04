@@ -5,7 +5,7 @@ var test = require('tape');
 
 test('ready', ready);
 
-test('passing test obj directly to ready()', require('..')('clean'));
+test('passing test obj directly', require('..')('D'));
 
 test('basic sequence including a fifo', require('..')('clean'));
 

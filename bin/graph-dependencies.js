@@ -12,14 +12,17 @@ process.stdout.write(
   '\trankdir = "RL";\n' +
   '\toverlap = false;\n' +
   '\tremincross = true;\n' +
+  '\tcompound = true;\n' +
   '\tsplines = true;\n\n'
 );
 
 process.stdout.write(_.flatten(_.pairs(deps).map(function(p) {
-  p[1] = p[1].depends || [];
-  return p[1].map(function(d) {
-    return '\t"' + p[0] + '" -> "' + d + '";';
-  });
-})).join('\n') + '\n');
+  if (p[1].depends) {
+    return p[1].depends.map(function(d) {
+      return '\t"' + p[0] + '" -> "' + d + '";';
+    });
+  }
+  return '\t"' + p[0] + '";';
+})).sort().reverse().join('\n') + '\n');
 
 process.stdout.write("}\n");

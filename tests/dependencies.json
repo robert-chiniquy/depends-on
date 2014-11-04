@@ -1,4 +1,19 @@
 {
+  "A": {
+    "cmd": ["true"]
+  },
+  "B": {
+    "cmd": ["true"],
+    "depends": ["A"]    
+  },
+  "C": {
+    "cmd": ["true"],
+    "depends": ["A"]
+  },
+  "D": {
+    "cmd": ["true"],
+    "depends": ["B", "C"]
+  },
   "false": {
     "cmd": ["false"]
   },

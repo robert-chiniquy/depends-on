@@ -114,6 +114,14 @@ One of `port` or `exit_code` is required to use `wait_for`.
 
 </dl>
 
+## graph dependencies
+
+Just for fun, `bin/graph-dependencies.js` can graph the dependencies in your project with graphviz.
+
+`dot -Tpng -odeps.png <(./bin/graph-dependencies.js) && open deps.png` -> 
+
+<img src="./deps.png" width=600 />
+
 ## notes
 ### using with tape
 Be sure to `require('depends-on')` before you `require('tape')`. Like this:
