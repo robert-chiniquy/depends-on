@@ -7,8 +7,8 @@ var _ = require('underscore');
 var resolve = require('resolve');
 var autotarget = require('async-autotarget');
 
-exports = module.exports = function depends_on(targets, source) {
-  var d = get_dependencies(source ? path.resolve(source) : undefined);
+exports = module.exports = function depends_on(targets, tree) {
+  var d = get_dependencies(tree);
   return d.get_ready(targets).bind(d);
 };
 
@@ -38,14 +38,11 @@ function stop(reason) {
 };
 module.exports.stop = stop; // TODO offer async stop method also
 
-var get_dependencies = _.memoize(function(source) {
-  return new Dependencies(source);
+var get_dependencies = _.memoize(function(tree) {
+  return new Dependencies(tree);
 });
 
-function find_dependencies(source) {
-  if (source) {
-    return path.resolve(source);
-  }
+function find_dependencies() {
   return resolve.sync('dependencies', { 
     basedir: process.cwd(),
     moduleDirectory: 'tests', 
@@ -54,15 +51,21 @@ function find_dependencies(source) {
 }
 module.exports.find = find_dependencies;
 
-function Dependencies(source) {
-  this.source = find_dependencies(source);
-  try {
-    this.dependencies = require(this.source);
-  } catch (e) {
-    this.error = e;
+function Dependencies(tree) {
+  if (tree) {
+    this.dependencies = tree;
+    this.cwd = tree._cwd || __dirname;
+    delete tree._cwd;
+  } else {
+    this.source = find_dependencies();
+    try {
+      this.dependencies = require(this.source);
+    } catch (e) {
+      this.error = e;
+    }
+    // this.source is always a filepath so all paths in that file should be relative to its directory
+    this.cwd = path.dirname(this.source);
   }
-  // this.source is always a filepath so all paths in that file should be relative to its directory
-  this.cwd = path.dirname(this.source);
   this.targets = {};
 }
 

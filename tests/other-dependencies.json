@@ -1,0 +1,8 @@
+{
+  "good": {
+    "cmd": ["true"]
+  },
+  "evil": {
+    "cmd": ["false"]
+  }
+}

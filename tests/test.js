@@ -22,9 +22,13 @@ test('false', function(t) {
 
 test('wait for socket', require('..')('write to the port'));
 
-test('custom filename', function(t) {
-  require('..')('fake target', 'custom-dependencies')(function(err) {
-    t.ok(err, "Non-existent custom dependencies returns error"); // doesn't exist
+test('pass in a tree from a different dependencies file', function(t) {
+  require('..')('good', require('./other-dependencies'))(t);
+});
+
+test('pass in a tree from a different file, see evil fail', function(t) {
+  require('..')('evil', require('./other-dependencies'))(function(err) {
+    t.ok(err, "evil exits 1 because evil is false");
     t.end();
   });
 });
