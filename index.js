@@ -331,7 +331,7 @@ Dependency.prototype.waitOnExit = function(callback) {
   callback = _.once(callback);
   async.until(function() {
     last = new Date().getTime() - start;
-    return self.child.exitCode || (last > self.what.wait_for.timeout * 1000)
+    return self.child.exitCode || self.child.exitCode === 0 || (last > self.what.wait_for.timeout * 1000)
   }, function(callback) {
     _.delay(callback, 101);
   }, function(err) {

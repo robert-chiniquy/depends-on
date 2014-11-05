@@ -36,6 +36,7 @@ test('pass in a tree from a different file, see evil fail', function(t) {
 test('test SIGKILL', require('../')(['catch-signals']));
 
 test('wait for exit code', require('../')('exit 17'));
+test('wait for exit code zero', require('../')('exit 0'));
 
 test('wait for exit code specified by string', require('../')('exit 17 wait_for string'));
 
