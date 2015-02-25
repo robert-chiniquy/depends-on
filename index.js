@@ -43,11 +43,11 @@ var get_dependencies = _.memoize(function(tree) {
 });
 
 function find_dependencies() {
-  return resolve.sync('dependencies', { 
+  return resolve.sync('dependencies', {
     basedir: process.cwd(),
-    moduleDirectory: 'tests', 
-    extensions: ['.json', '.js'] 
-  });  
+    moduleDirectory: 'tests',
+    extensions: ['.json', '.js']
+  });
 }
 module.exports.find = find_dependencies;
 
@@ -166,7 +166,7 @@ Dependency.prototype.kill = function(reason) {
   }
   if (!this.error) { // todo: don't kill if this.error ?
     this.error = this.name + " killed" + (reason ? " because " + reason : '');
-  }  
+  }
   this.child.removeAllListeners('exit');
   this.child.kill(this.what.signal || 'SIGTERM');
 };
@@ -190,9 +190,7 @@ Dependency.prototype.spawn = function(test, callback) {
   }
 
   if (this.spawned) {
-    if (test) {
-      test.pass(this.name + " already started");
-    }
+    // already running
     _.defer(callback);
     return;
   }
@@ -200,8 +198,8 @@ Dependency.prototype.spawn = function(test, callback) {
 
   this.child = spawn(cmd, args, {
     'cwd': this.what.cwd,
-    'stdio': [ 0, 
-      this.what.stdout && fs.openSync(this.what.stdout, 'a') || 1, 
+    'stdio': [ 0,
+      this.what.stdout && fs.openSync(this.what.stdout, 'a') || 1,
       this.what.stderr && fs.openSync(this.what.stderr, 'a') || 2]
   });
 

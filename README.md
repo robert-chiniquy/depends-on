@@ -23,13 +23,13 @@ example:
 var ready = require('depends-on')('redis');
 var test = require('tape');
 
-test('init', ready);
+test('init dependencies for ' + __filename, ready);
 
 < … tests that use redis here … >
 
 ```
 
-`ready()` is a function that takes a callback (or a tape test object). It will call that callback when your dependencies are ready. They'll be stopped when your node process exits. 
+`ready()` is a function that takes a callback (or a tape test object). It will call that callback when your dependencies are ready. They'll be stopped when your node process exits.
 
 Dependencies can have dependencies. Say you want to clear all values from Redis after it starts, but before your tests run:
 
@@ -65,7 +65,7 @@ test('test that uses redis', function(t) {
 
 If multiple tests are `require()`d and share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will exit.
 
-## dependencies.json 
+## dependencies.json
 `dependencies.json` is a file containing a json object mapping dependency names to objects that describe each dependency.
 
 ### dependency fields
@@ -118,7 +118,7 @@ One of `port` or `exit_code` is required to use `wait_for`.
 
 Just for fun, `bin/graph-dependencies.js` can graph the dependencies in your project with graphviz.
 
-`dot -Tpng -odeps.png <(./bin/graph-dependencies.js) && open deps.png` -> 
+`dot -Tpng -odeps.png <(./bin/graph-dependencies.js) && open deps.png` ->
 
 <img src="./deps.png" width=600 />
 
