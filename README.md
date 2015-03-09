@@ -133,8 +133,8 @@ var test = require('tape');
 
 Both depends-on and tape have `process.on('exit', …)` handlers, but tape calls `process.exit` in its `process.on('exit', …)` handler, so if tape's handler runs first, depends-on's handler will never run (and child processes won't be cleaned up). Handlers run in the order they are added, so depends-on must be required first.
 
-### why not use a bash script or Makefile?
-
+### why not
+#### … use a bash script or Makefile?
 
 I like to be able to run integration tests individually like `$ node tests.js` without running anything else or relying on some external service coincidentally being on.
 
