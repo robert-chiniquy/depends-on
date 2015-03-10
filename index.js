@@ -107,18 +107,18 @@ Dependencies.prototype.get_ready = function(targets) {
     _.each(self.dependencies, function(what, name) {
       what.depends = what.depends || [];
 
-      // adjust paths relative to directory of dependencies.json
-      if (what.stdout && what.stdout[0] !== '/') {
-        what.stdout = path.resolve(self.cwd, what.stdout);
-      }
-
-      if (what.stderr && what.stderr[0] !== '/') {
-        what.stderr = path.resolve(self.cwd, what.stderr);
-      }
-
       if (!what.cwd || what.cwd[0] !== '/') {
         what.cwd = what.cwd || self.cwd;
         what.cwd = path.resolve(self.cwd, what.cwd);
+      }
+
+      // adjust paths for stdio relative to what.cwd
+      if (what.stdout && what.stdout[0] !== '/') {
+        what.stdout = path.resolve(what.cwd, what.stdout);
+      }
+
+      if (what.stderr && what.stderr[0] !== '/') {
+        what.stderr = path.resolve(what.cwd, what.stderr);
       }
 
       // TODO validate existence
