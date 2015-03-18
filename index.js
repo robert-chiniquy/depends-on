@@ -96,7 +96,7 @@ Dependencies.prototype.get_ready = function(targets) {
         self.test.error(err, "Dependencies start up after " + (new Date().getTime() - start) + " ms");
         self.test.end();
         if (err) {
-          // good idea? almost definitely not.
+          // Throwing here is important as an error during dependency startup should invalidate later tests.
           throw err;
         }
       };
