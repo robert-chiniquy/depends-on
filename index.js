@@ -95,6 +95,10 @@ Dependencies.prototype.get_ready = function(targets) {
       callback = function(err) {
         self.test.error(err, "Dependencies start up after " + (new Date().getTime() - start) + " ms");
         self.test.end();
+        if (err) {
+          // good idea? almost definitely not.
+          throw err;
+        }
       };
     } else {
       self.test = null;
