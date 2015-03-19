@@ -339,7 +339,7 @@ Dependency.prototype.waitOnExit = function(callback) {
     }
     if (self.child.exitCode == self.what.wait_for.exit_code) {
       if (self.test) {
-        self.test.pass(self.name +' started in '+ last);
+        self.test.pass(self.name +' started in '+ last +'ms');
       }
       callback();
       return;
