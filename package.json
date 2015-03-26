@@ -18,7 +18,7 @@
     "tape": "~2.3.2"
   },
   "scripts": {
-    "test": "rm tests/fish 2>/dev/null; node tests/test.js && (cd tests ; node test.js)",
+    "test": "rm tests/fish 2>/dev/null; node tests/test.js && (cd tests ; node test.js) && node tests/local/local-dir-test.js",
     "coverage": "./node_modules/.bin/istanbul cover tests/test.js 2>/dev/null"
   },
   "repository": "git@github.com:robert-chiniquy/depends-on.git",

@@ -9,7 +9,7 @@ var autotarget = require('async-autotarget');
 
 exports = module.exports = function depends_on(targets, tree) {
   var d = get_dependencies(tree);
-  return d.get_ready(targets).bind(d);
+  return d.get_ready(targets);
 };
 
 // this must be called at module scope because tape's process.on('exit', …) handler calls process.exit()
@@ -43,10 +43,18 @@ var get_dependencies = _.memoize(function(tree) {
 });
 
 function find_dependencies() {
+  var extensions = ['.json', '.js'];
+  var locals = extensions.map(function(ext) {
+    return path.join(path.dirname(require.main.filename), 'dependencies') + ext;
+  }).filter(fs.existsSync);
+
+  if (locals.length) {
+    return locals[0];
+  }
   return resolve.sync('dependencies', {
     basedir: process.cwd(),
     moduleDirectory: 'tests',
-    extensions: ['.json', '.js']
+    extensions: extensions
   });
 }
 module.exports.find = find_dependencies;
@@ -85,7 +93,7 @@ Dependencies.prototype.get_ready = function(targets) {
     }
   }
 
-  return function ready(callback) {
+  var ready = function(callback) {
     var
       start = new Date().getTime(),
       names = [];
@@ -121,7 +129,6 @@ Dependencies.prototype.get_ready = function(targets) {
         what.stderr = path.resolve(what.cwd, what.stderr);
       }
 
-      // TODO validate existence
       var d = get_dependency(name, what, self.cwd);
       self.targets[name] = what.depends.concat([d.spawn.bind(d, self.test)]);
     });
@@ -135,7 +142,10 @@ Dependencies.prototype.get_ready = function(targets) {
       names = names.concat(_.keys(results));
       callback(err);
     });
-  }
+  };
+
+  ready.dependencies = this;
+  return ready;
 };
 
 var get_dependency = _.memoize(function(name, what) {

@@ -1,0 +1,17 @@
+{
+  "AA": {
+    "cmd": ["true"]
+  },
+  "BB": {
+    "cmd": ["true"],
+    "depends": ["AA"]
+  },
+  "CC": {
+    "cmd": ["true"],
+    "depends": ["AA"]
+  },
+  "unique": {
+    "cmd": ["true"],
+    "depends": ["BB", "CC"]
+  }
+}
