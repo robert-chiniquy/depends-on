@@ -3,11 +3,14 @@ depends-on
 
 [![Build Status](https://travis-ci.org/robert-chiniquy/depends-on.svg?branch=master)](https://travis-ci.org/robert-chiniquy/depends-on)
 
-Spins up external processes your tests need. Think of it as `async.auto` with process control for integration tests.
+Manages the external services that your tests depend on. Think of it as `async.auto` with process control for integration tests.
 
-example:
+examples
 ========
 
+## with one dependency
+
+`dependencies.json`:
 ```json
 {
   "redis": {
@@ -19,6 +22,7 @@ example:
 }
 ```
 
+`test-thing.js`:
 ```javascript
 var ready = require('depends-on')('redis');
 var test = require('tape');
@@ -31,8 +35,14 @@ test('init dependencies for ' + __filename, ready);
 
 `ready()` is a function that takes a callback (or a tape test object). It will call that callback when your dependencies are ready. They'll be stopped when your node process exits.
 
-Dependencies can have dependencies. Say you want to clear all values from Redis after it starts, but before your tests run:
+## with multiple dependencies
 
+
+Dependencies can have dependencies. This is the typical use case, where multiple services must start before your tests can run.
+
+Building on the previous example, say you want to clear all values from Redis after it starts, but before your tests run.
+
+`dependencies.json`:
 ```json
 {
   "redis-server": {
@@ -51,6 +61,7 @@ Dependencies can have dependencies. Say you want to clear all values from Redis 
 }
 ```
 
+`test-other-thing.js`:
 ```javascript
 var ready = require('depends-on')('fresh & clean redis');
 var test = require('tape');
@@ -63,7 +74,7 @@ test('test that uses redis', function(t) {
 …
 ```
 
-If multiple tests are `require()`d and share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will exit.
+If multiple tests are `require()`'d (as in the tape test runner) and share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will stopped (by default with SIGINT but the signal is configurable).
 
 ## dependencies.json
 `dependencies.json` is a file containing a json object mapping dependency names to objects that describe each dependency.
@@ -96,7 +107,24 @@ If multiple tests are `require()`d and share dependencies, depends-on will share
 
 ### wait_for fields
 
-One of `port` or `exit_code` is required to use `wait_for`.
+One of `port` or `exit_code` is required to use `wait_for` (what else are you waiting for?).
+
+```json
+    "wait_for": {
+      "host": "127.0.0.1",
+      "port": 22181,
+      "timeout": 30
+    }
+```
+
+By default, depends-on will throw an error if one of the processes it starts exits before your tests are done. Use an `exit_code` `wait_for` block if a process is expected to complete and exit prior to tests running (maybe you're loading a db schema).
+
+```json
+    "wait_for": {
+      "exit_code": 0,
+      "timeout": 120
+    }
+```
 
 <dl>
 
@@ -118,7 +146,7 @@ One of `port` or `exit_code` is required to use `wait_for`.
 
 Just for fun, `bin/graph-dependencies.js` can graph the dependencies in your project with graphviz.
 
-`dot -Tpng -odeps.png <(./bin/graph-dependencies.js) && open deps.png` ->
+For example, graphing the dependencies in the fixtures for depends-on: `dot -Tpng -odeps.png <(./bin/graph-dependencies.js) && open deps.png` ->
 
 <img src="./deps.png" width=600 />
 
