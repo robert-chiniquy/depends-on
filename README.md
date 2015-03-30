@@ -11,18 +11,6 @@ Manages the external services that your tests depend on. Think of it as [async.a
 
 ### … with one dependency
 
-`dependencies.json`:
-```json
-{
-  "redis": {
-    "cmd": ["/usr/sbin/redis-server"],
-    "wait_for": {
-      "port": 6379
-    }
-  }
-}
-```
-
 `test-thing.js`:
 ```javascript
 var ready = require('depends-on')('redis');
@@ -35,13 +23,37 @@ test('test that uses redis', function(t) {
 });
 ```
 
+`dependencies.json`:
+```json
+{
+  "redis": {
+    "cmd": ["/usr/sbin/redis-server"],
+    "wait_for": {
+      "port": 6379
+    }
+  }
+}
+```
+
 `ready()` is a function that takes a callback (or a tape test object). It will call that callback when your dependencies are ready. They'll be stopped automatically when your tests are done.
 
 ### … with multiple dependencies
 
 Dependencies can have dependencies. This is the typical use case, where multiple services must start before your tests can run.
 
-Building on the previous example, say you want to clear all values from Redis after it starts, but before your tests run.
+Building on the previous example, say you want to clear all values from (or load some fixtures into) Redis after it starts, but before your tests run.
+
+`test-other-thing.js`:
+```javascript
+var ready = require('depends-on')('fresh & clean redis');
+var test = require('tape');
+
+test('start fresh redis', ready);
+
+test('test that uses redis', function(t) {
+  …
+});
+```
 
 `dependencies.json`:
 ```json
@@ -60,18 +72,6 @@ Building on the previous example, say you want to clear all values from Redis af
     }
   }
 }
-```
-
-`test-other-thing.js`:
-```javascript
-var ready = require('depends-on')('fresh & clean redis');
-var test = require('tape');
-
-test('start fresh redis', ready);
-
-test('test that uses redis', function(t) {
-  …
-});
 ```
 
 If multiple tests are `require()`'d and share dependencies, depends-on will share them across the test files, each dependency only being started once. When node exits, all dependencies will stopped (by default with `SIGTERM` but the signal is configurable).
