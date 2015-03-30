@@ -16,13 +16,16 @@ exports = module.exports = function depends_on(targets, tree) {
 // this is also why you should require('depends-on') before you require('tape')
 process.on('exit', stop);
 
+// TODO: only assign this handler if dependencies contain >0 persistent processes (i.e. no exit_code)
 process.on('uncaughtException', function(err) {
   process.stderr.write(err.stack + '\n');
   stop(err);
   throw err;
 });
 
+// TODO: only assign this handler if dependencies contain >0 persistent processes (i.e. no exit_code)
 process.on('SIGINT', function() {
+  // TODO: stop('SIGINT') ?
   _.each(get_dependency.cache, function(what, name) {
     if (what.child) {
       what.child.kill('SIGINT');
@@ -51,6 +54,7 @@ function find_dependencies() {
   if (locals.length) {
     return locals[0];
   }
+
   return resolve.sync('dependencies', {
     basedir: process.cwd(),
     moduleDirectory: 'tests',
@@ -85,7 +89,7 @@ Dependencies.prototype.get_ready = function(targets) {
       if (typeof callback === 'object' && callback.test) {
         self.test = callback;
         callback = function(err) {
-          self.test.error(err, "No error has already occurred");
+          self.test.error(err, "No error has already occurred"); // helpful?
           self.test.end();
         };
       }
@@ -104,7 +108,8 @@ Dependencies.prototype.get_ready = function(targets) {
         self.test.error(err, "Dependencies start up after " + (new Date().getTime() - start) + " ms");
         self.test.end();
         if (err) {
-          // Throwing here is important as an error during dependency startup should invalidate later tests.
+          // Throwing here is important
+          // as an error during dependency startup should invalidate later tests.
           throw err;
         }
       };
@@ -113,23 +118,7 @@ Dependencies.prototype.get_ready = function(targets) {
     }
 
     _.each(self.dependencies, function(what, name) {
-      what.depends = what.depends || [];
-
-      if (!what.cwd || what.cwd[0] !== '/') {
-        what.cwd = what.cwd || self.cwd;
-        what.cwd = path.resolve(self.cwd, what.cwd);
-      }
-
-      // adjust paths for stdio relative to what.cwd
-      if (what.stdout && what.stdout[0] !== '/') {
-        what.stdout = path.resolve(what.cwd, what.stdout);
-      }
-
-      if (what.stderr && what.stderr[0] !== '/') {
-        what.stderr = path.resolve(what.cwd, what.stderr);
-      }
-
-      var d = get_dependency(name, what, self.cwd);
+      var d = get_dependency(name, what, self);
       self.targets[name] = what.depends.concat([d.spawn.bind(d, self.test)]);
     });
 
@@ -144,17 +133,35 @@ Dependencies.prototype.get_ready = function(targets) {
     });
   };
 
-  ready.dependencies = this;
+  ready._dependencies = this;
   return ready;
 };
 
-var get_dependency = _.memoize(function(name, what) {
-  return new Dependency(name, what);
+// TODO: This function should pick among subtypes of Dependency based on params in `what`
+var get_dependency = _.memoize(function(name, what, source) {
+  return new Dependency(name, what, source);
 });
 
-function Dependency(name, what) {
-  this.name = name;
+function Dependency(name, what, source) {
+  what.depends = what.depends || [];
+
+  if (!what.cwd || what.cwd[0] !== '/') {
+    what.cwd = what.cwd || source.cwd;
+    what.cwd = path.resolve(source.cwd, what.cwd);
+  }
+
+  // adjust paths for stdio relative to what.cwd
+  if (what.stdout && what.stdout[0] !== '/') {
+    what.stdout = path.resolve(what.cwd, what.stdout);
+  }
+
+  if (what.stderr && what.stderr[0] !== '/') {
+    what.stderr = path.resolve(what.cwd, what.stderr);
+  }
+
   this.what = what;
+  this.name = name;
+
   this.child = null;
   this.spawned = false; // TODO explicit state machine <——
   this.error = null;
@@ -216,6 +223,8 @@ Dependency.prototype.spawn = function(test, callback) {
   this.child.unref(); // don't block the event loop, children will be signalled on exit
 
   this.child.on('exit', function(code, signal) {
+    this.child = null;
+
     if (self.what.wait_for && code == self.what.wait_for.exit_code) {
       return;
     }
@@ -237,7 +246,7 @@ Dependency.prototype.spawn = function(test, callback) {
     }
   });
 
-  if (this.what.wait_for) { // TODO should be subtypes of Dependency
+  if (this.what.wait_for) { // TODO should be subtypes of Dependency and handled in get_dependency
     this.what.wait_for.timeout = this.what.wait_for.timeout || 30;
     if (this.what.wait_for.port) {
       this.waitOnSocket(callback);
@@ -250,6 +259,7 @@ Dependency.prototype.spawn = function(test, callback) {
   }
 
   // This lets us return an err to callback() if `cmd` exited non-zero somewhat immediately
+  // TODO should cooperate with on('exit', …) listener
   this.timer = setTimeout(function() {
     if (self.child.signalCode || self.child.exitCode) {
       if (self.waiter) {
@@ -329,7 +339,7 @@ Dependency.prototype.waitOnSocket = function(callback) {
   });
 };
 
-// todo use an on('exit') handler
+// todo use an on('exit', …) handler
 Dependency.prototype.waitOnExit = function(callback) {
   var
     self = this,
