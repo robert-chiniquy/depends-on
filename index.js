@@ -14,17 +14,17 @@ exports = module.exports = function depends_on(targets, tree) {
 
 // this must be called at module scope because tape's process.on('exit', …) handler calls process.exit()
 // this is also why you should require('depends-on') before you require('tape')
-process.on('exit', stop);
+process.once('exit', stop);
 
 // TODO: only assign this handler if dependencies contain >0 persistent processes (i.e. no exit_code)
-process.on('uncaughtException', function(err) {
+process.once('uncaughtException', function(err) {
   process.stderr.write(err.stack + '\n');
   stop(err);
   throw err;
 });
 
 // TODO: only assign this handler if dependencies contain >0 persistent processes (i.e. no exit_code)
-process.on('SIGINT', function() {
+process.once('SIGINT', function() {
   stop('SIGINT');
   process.kill('SIGINT');
 });
