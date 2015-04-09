@@ -25,13 +25,8 @@ process.on('uncaughtException', function(err) {
 
 // TODO: only assign this handler if dependencies contain >0 persistent processes (i.e. no exit_code)
 process.on('SIGINT', function() {
-  // TODO: stop('SIGINT') ?
-  _.each(get_dependency.cache, function(what, name) {
-    if (what.child) {
-      what.child.kill('SIGINT');
-    }
-  });
-  throw new Error('SIGINT');
+  stop('SIGINT');
+  process.kill('SIGINT');
 });
 
 function stop(reason) {
