@@ -26,7 +26,7 @@ process.once('uncaughtException', function(err) {
 // TODO: only assign this handler if dependencies contain >0 persistent processes (i.e. no exit_code)
 process.once('SIGINT', function() {
   stop('SIGINT');
-  process.kill('SIGINT');
+  process.kill(process.pid, 'SIGINT');
 });
 
 function stop(reason) {
