@@ -7,6 +7,8 @@ var _ = require('underscore');
 var resolve = require('resolve');
 var autotarget = require('async-autotarget');
 
+var truncatedStdioMap = {};
+
 exports = module.exports = function depends_on(targets, tree) {
   var d = get_dependencies(tree);
   return d.get_ready(targets);
@@ -207,6 +209,18 @@ Dependency.prototype.spawn = function(test, callback) {
     return;
   }
   this.spawned = true;
+
+  if (this.what.truncateStdio && !truncatedStdioMap[this.name]) {
+    try {
+      fs.truncateSync(this.what.stdout, 0);
+      fs.truncateSync(this.what.stderr, 0);
+    } catch (e) {
+      if (e.code !== 'ENOENT') {
+        throw e;
+      }
+    }
+    truncatedStdioMap[this.name] = true;
+  }
 
   this.child = spawn(cmd, args, {
     'cwd': this.what.cwd,
