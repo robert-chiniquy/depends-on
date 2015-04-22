@@ -4,7 +4,6 @@ var path = require('path');
 require('longjohn');
 var ready = require('..')('true'); // for the process.on('exit', …); to be before tape's
 var test = require('tape');
-var async = require('async');
 
 test('ready', ready);
 
