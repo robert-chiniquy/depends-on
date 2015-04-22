@@ -187,7 +187,8 @@ Dependency.prototype.spawn = function(test, callback) {
   var
     self = this,
     cmd = this.what.cmd[0],
-    args = this.what.cmd.slice(1);
+    args = this.what.cmd.slice(1),
+    openMode = 'a';
 
   this.test = test;
 
@@ -208,11 +209,15 @@ Dependency.prototype.spawn = function(test, callback) {
   }
   this.spawned = true;
 
+  if (this.what.truncateStdio) {
+    openMode = 'w'
+  }
+
   this.child = spawn(cmd, args, {
     'cwd': this.what.cwd,
     'stdio': [ 0,
-      this.what.stdout && fs.openSync(this.what.stdout, 'a') || 1,
-      this.what.stderr && fs.openSync(this.what.stderr, 'a') || 2]
+      this.what.stdout && fs.openSync(this.what.stdout, openMode) || 1,
+      this.what.stderr && fs.openSync(this.what.stderr, openMode) || 2]
   });
 
   this.child.unref(); // don't block the event loop, children will be signalled on exit

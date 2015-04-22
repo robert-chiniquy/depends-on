@@ -1,3 +1,5 @@
+var fs = require('fs');
+var path = require('path');
 
 require('longjohn');
 var ready = require('..')('true'); // for the process.on('exit', …); to be before tape's
@@ -47,4 +49,36 @@ test('timeout', function(t) {
   });
 });
 
+test('truncate stdio', function(t) {
+  fs.writeFileSync(path.resolve(__dirname, 'logs/truncate-stdout'), 'hello bluefish\n');
+  fs.writeFileSync(path.resolve(__dirname, 'logs/truncate-stderr'), 'hello redfish\n');
 
+  require('..')('truncate stdio')(function(err) {
+    var stdout, stderr;
+
+    t.ifError(err);
+
+    stdout = fs.readFileSync(path.resolve(__dirname, 'logs/truncate-stdout')).toString();
+    stderr = fs.readFileSync(path.resolve(__dirname, 'logs/truncate-stderr')).toString();
+    t.equal(stdout, 'hello bluefish\n', 'stdout only had a single line and was truncated.');
+    t.equal(stderr, 'hello redfish\n', 'stderr only had a single line and was truncated.');
+    t.end();
+  });
+});
+
+test('do not truncate stdio', function(t) {
+  fs.writeFileSync(path.resolve(__dirname, 'logs/truncate-stdout'), 'hello bluefish\n');
+  fs.writeFileSync(path.resolve(__dirname, 'logs/truncate-stderr'), 'hello redfish\n');
+
+  require('..')('do not truncate stdio')(function(err) {
+    var stdout, stderr;
+
+    t.ifError(err);
+
+    stdout = fs.readFileSync(path.resolve(__dirname, 'logs/truncate-stdout')).toString();
+    stderr = fs.readFileSync(path.resolve(__dirname, 'logs/truncate-stderr')).toString();
+    t.equal(stdout, 'hello bluefish\nhello bluefish\n', 'stdout had multiple lines and was not truncated.');
+    t.equal(stderr, 'hello redfish\nhello redfish\n', 'stderr had multiple lines and was truncated.');
+    t.end();
+  });
+});

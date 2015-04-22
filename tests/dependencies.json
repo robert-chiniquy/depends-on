@@ -88,5 +88,16 @@
     "cmd": ["./fixtures/catch-signals.js"],
     "stdout": "./logs/catch-signals.log",
     "signal": "SIGKILL"
+  },
+  "truncate stdio": {
+    "cmd": ["./fixtures/truncate-stdio.sh"],
+    "stdout": "./logs/truncate-stdout",
+    "stderr": "./logs/truncate-stderr",
+    "truncateStdio": true
+  },
+  "do not truncate stdio": {
+    "cmd": ["./fixtures/truncate-stdio.sh"],
+    "stdout": "./logs/truncate-stdout",
+    "stderr": "./logs/truncate-stderr"
   }
 }
