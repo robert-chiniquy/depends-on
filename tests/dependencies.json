@@ -4,7 +4,7 @@
   },
   "B": {
     "cmd": ["true"],
-    "depends": ["A"]    
+    "depends": ["A"]
   },
   "C": {
     "cmd": ["true"],
@@ -91,13 +91,13 @@
   },
   "truncate stdio": {
     "cmd": ["./fixtures/truncate-stdio.sh"],
-    "stdout": "./logs/truncate-stdout",
-    "stderr": "./logs/truncate-stderr",
+    "stdout": "./logs/truncate-stdout.log",
+    "stderr": "./logs/truncate-stderr.log",
     "truncateStdio": true
   },
   "do not truncate stdio": {
     "cmd": ["./fixtures/truncate-stdio.sh"],
-    "stdout": "./logs/truncate-stdout",
-    "stderr": "./logs/truncate-stderr"
+    "stdout": "./logs/truncate-stdout.log",
+    "stderr": "./logs/truncate-stderr.log"
   }
 }

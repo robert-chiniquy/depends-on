@@ -91,17 +91,21 @@ If multiple tests are `require()`'d and share dependencies, depends-on will shar
 <dt>cwd</dt>
 <dd>The cwd to pass to child_process.spawn</dd>
 
+<dt>wait_for</dt>
+<dd>object specifying a timeout and either an exit code or ip & port to wait for socket availability before considering a dependency started</dd>
+
+<dt>signal</dt>
+<dd>signal to use to stop the dependency when your tests end (default: `SIGTERM` )</dd>
+
 <dt>stdout</dt>
 <dd>path to log dependency's stdout to (default: your stdout). This can be relative to either the `cwd` value you specify or `__dirname` of `dependencies.json`.</dd>
 
 <dt>stderr</dt>
 <dd>path to log dependency's stderr to (default: your stderr). This can be relative to either the `cwd` value you specify or `__dirname` of `dependencies.json`.</dd>
 
-<dt>signal</dt>
-<dd>signal to use to stop the dependency when your tests end (default: `SIGTERM` )</dd>
+<dt>truncateStdio</dt>
+<dd>boolean, if true files stdio is piped to will be truncated on use</dd>
 
-<dt>wait_for</dt>
-<dd>lets you specify a timeout and either an exit code or ip:port to wait for socket availability before considering a dependency started</dd>
 
 </dl>
 
