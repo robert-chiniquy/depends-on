@@ -1,6 +1,6 @@
 {
   "name": "depends-on",
-  "version": "2.1.7",
+  "version": "2.2.0",
   "description": "Spins up external processes your tests need",
   "main": "index.js",
   "directories": {
